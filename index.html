@@ -1,50 +1,97 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Smart Schedule - Lắp Camera</title>
+<meta charset="UTF-8">
+<title>Smart Schedule Pro</title>
 
-    <style>
-        body {
+<style>
+body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  background: #f0f2f5;
+  background: #f4f6fb;
   display: flex;
 }
 
+/* Sidebar */
 .sidebar {
   width: 240px;
   background: linear-gradient(180deg, #2c7be5, #1a5edb);
   color: white;
   padding: 20px;
 }
-
 .sidebar h2 {
   margin-bottom: 30px;
 }
 
+/* Main */
 .main {
   flex: 1;
   padding: 20px;
 }
 
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.stat-box {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* Card */
 .card {
   background: white;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   margin-bottom: 20px;
 }
 
-.task {
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 10px;
-  transition: 0.3s;
+/* Input */
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
-.task:hover {
-  transform: scale(1.02);
+/* Button */
+button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #2c7be5;
+  color: white;
+  cursor: pointer;
+}
+
+.delete {
+  background: red;
+}
+
+/* Task */
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  margin-top: 10px;
 }
 
 .done {
@@ -54,114 +101,155 @@
 .pending {
   background: #eef4ff;
 }
-    </style>
+
+/* Status badge */
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status.done {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Gạch ngang khi xong */
+.task.done b {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+</style>
 </head>
 
 <body>
 
-    <div class="sidebar">
-        <h2>📅 Smart Schedule</h2>
-        <p>Danh sách lịch trình</p>
-    </div>
+<div class="sidebar">
+  <h2>📅 Smart App</h2>
+  <p>Quản lý lịch thông minh</p>
+</div>
 
-    <div class="main">
+<div class="main">
 
-        <div class="header">
-            <h3>Xin chào 👋</h3>
-            <p>Quản lý công việc</p>
-        </div>
+  <div class="header">
+    <h3>Dashboard</h3>
+    <span>👤 User</span>
+  </div>
 
-        <div class="card">
-            <h3>➕ Thêm lịch</h3>
-            <input type="text" id="title" placeholder="Tên công việc">
-            <input type="datetime-local" id="time">
-            <button onclick="addTask()">Thêm</button>
-        </div>
+  <div class="stats">
+    <div class="stat-box" id="total">0<br>Tổng</div>
+    <div class="stat-box" id="done">0<br>Hoàn thành</div>
+    <div class="stat-box" id="pending">0<br>Chưa xong</div>
+  </div>
 
-        <div class="card">
-            <h3>📌 Danh sách công việc</h3>
-            <div id="taskList"></div>
-        </div>
+  <div class="card">
+    <h3>➕ Thêm công việc</h3>
+    <input id="title" placeholder="Tên công việc">
+    <input type="datetime-local" id="time">
+    <button onclick="addTask()">Thêm</button>
+  </div>
 
-    </div>
+  <div class="card">
+    <h3>📌 Công việc</h3>
+    <div id="taskList"></div>
+  </div>
+
+</div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAJ_VzRze1hPkwgT1ULtsxLvErGvfmP_yM",
-    authDomain: "chuyende2-f7eed.firebaseapp.com",
-    projectId: "chuyende2-f7eed",
-    storageBucket: "chuyende2-f7eed.appspot.com",
-    messagingSenderId: "488325114381",
-    appId: "1:488325114381:web:2c691a05e24c6407018344"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAJ_VzRze1hPkwgT1ULtsxLvErGvfmP_yM",
+  authDomain: "chuyende2-f7eed.firebaseapp.com",
+  projectId: "chuyende2-f7eed",
+  storageBucket: "chuyende2-f7eed.appspot.com",
+  messagingSenderId: "488325114381",
+  appId: "1:488325114381:web:2c691a05e24c6407018344"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  let tasks = [];
+let tasks = [];
 
-  // 🔥 Lấy dữ liệu realtime
-  onSnapshot(collection(db, "tasks"), (snapshot) => {
-    tasks = [];
-    snapshot.forEach(docSnap => {
-      tasks.push({ id: docSnap.id, ...docSnap.data() });
-    });
-    render();
+// realtime sync
+onSnapshot(collection(db, "tasks"), (snapshot) => {
+  tasks = [];
+  snapshot.forEach(docSnap => {
+    tasks.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  render();
+});
+
+// add
+window.addTask = async function () {
+  let title = document.getElementById("title").value;
+  let time = document.getElementById("time").value;
+
+  if (!title || !time) return alert("Nhập đủ!");
+
+  await addDoc(collection(db, "tasks"), {
+    title, time, status: "pending"
   });
 
-  // 🔥 Thêm task
-  window.addTask = async function () {
-    let title = document.getElementById("title").value;
-    let time = document.getElementById("time").value;
+  document.getElementById("title").value = "";
+  document.getElementById("time").value = "";
+};
 
-    if (!title || !time) {
-      alert("Nhập đầy đủ!");
-      return;
-    }
+// delete
+window.deleteTask = async function (id) {
+  await deleteDoc(doc(db, "tasks", id));
+};
 
-    await addDoc(collection(db, "tasks"), {
-      title,
-      time,
-      status: "pending"
-    });
+// toggle
+window.toggleStatus = async function (id, status) {
+  await updateDoc(doc(db, "tasks", id), {
+    status: status === "done" ? "pending" : "done"
+  });
+};
 
-    document.getElementById("title").value = "";
-    document.getElementById("time").value = "";
-  };
+// render
+function render() {
+  let html = "";
+  let done = 0;
 
-  // 🔥 Xóa
-  window.deleteTask = async function (id) {
-    await deleteDoc(doc(db, "tasks", id));
-  };
+  tasks.forEach(t => {
+    if (t.status === "done") done++;
 
-  // 🔥 Đổi trạng thái
-  window.toggleStatus = async function (id, currentStatus) {
-    await updateDoc(doc(db, "tasks", id), {
-      status: currentStatus === "done" ? "pending" : "done"
-    });
-  };
-
-  // 🔥 Render UI
-  function render() {
-    let html = "";
-
-    tasks.forEach(t => {
-      let statusClass = t.status === "done" ? "done" : "pending";
-
-      html += `
-        <div class="task ${statusClass}">
+    html += `
+      <div class="task ${t.status}">
+        <div>
           <b>${t.title}</b><br>
           ⏰ ${t.time}<br>
-          📌 ${t.status}<br><br>
-
-          <button onclick="toggleStatus('${t.id}', '${t.status}')">✔</button>
-          <button onclick="deleteTask('${t.id}')" style="background:red;color:white">Xóa</button>
+          <span class="status ${t.status}">
+            ${t.status === "done" ? "✔ Đã hoàn thành" : "⏳ Đang làm"}
+          </span>
         </div>
-      `;
-    });
 
-    document.getElementById("taskList").innerHTML = html;
-  }
+        <div>
+          <button onclick="toggleStatus('${t.id}','${t.status}')">✔</button>
+          <button class="delete" onclick="deleteTask('${t.id}')">Xóa</button>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("taskList").innerHTML = html;
+
+  document.getElementById("total").innerHTML = tasks.length + "<br>Tổng";
+  document.getElementById("done").innerHTML = done + "<br>Hoàn thành";
+  document.getElementById("pending").innerHTML = (tasks.length - done) + "<br>Chưa xong";
+}
 </script>
+
+</body>
+</html>
