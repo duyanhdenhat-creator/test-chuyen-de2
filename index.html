@@ -84,36 +84,35 @@
         </div>
 
     </div>
-<script>
-  let defaultTasks = [
-    {
-      id: 1,
-      title: "Họp dự án",
-      time: "2026-04-25T08:00",
-      status: "pending",
-      type: "work"
-    },
-    {
-      id: 2,
-      title: "Đi tập gym",
-      time: "2026-04-25T18:00",
-      status: "done",
-      type: "personal"
-    }
-  ];
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  let tasks = JSON.parse(localStorage.getItem("tasks"));
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJ_VzRze1hPkwgT1ULtsxLvErGvfmP_yM",
+    authDomain: "chuyende2-f7eed.firebaseapp.com",
+    projectId: "chuyende2-f7eed",
+    storageBucket: "chuyende2-f7eed.appspot.com",
+    messagingSenderId: "488325114381",
+    appId: "1:488325114381:web:2c691a05e24c6407018344"
+  };
 
-  if (!tasks || tasks.length === 0) {
-    tasks = defaultTasks;
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  function save() {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }
+  let tasks = [];
 
-  function addTask() {
+  // 🔥 Lấy dữ liệu realtime
+  onSnapshot(collection(db, "tasks"), (snapshot) => {
+    tasks = [];
+    snapshot.forEach(docSnap => {
+      tasks.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    render();
+  });
+
+  // 🔥 Thêm task
+  window.addTask = async function () {
     let title = document.getElementById("title").value;
     let time = document.getElementById("time").value;
 
@@ -122,59 +121,47 @@
       return;
     }
 
-    let newTask = {
-      id: Date.now(),
+    await addDoc(collection(db, "tasks"), {
       title,
       time,
-      status: "pending",
-      type: "work"
-    };
-
-    tasks.push(newTask);
-    save();
-    render();
+      status: "pending"
+    });
 
     document.getElementById("title").value = "";
     document.getElementById("time").value = "";
-  }
+  };
 
-  function deleteTask(id) {
-    tasks = tasks.filter(t => t.id !== id);
-    save();
-    render();
-  }
+  // 🔥 Xóa
+  window.deleteTask = async function (id) {
+    await deleteDoc(doc(db, "tasks", id));
+  };
 
-  function toggleStatus(id) {
-    tasks = tasks.map(t => {
-      if (t.id === id) {
-        t.status = t.status === "done" ? "pending" : "done";
-      }
-      return t;
+  // 🔥 Đổi trạng thái
+  window.toggleStatus = async function (id, currentStatus) {
+    await updateDoc(doc(db, "tasks", id), {
+      status: currentStatus === "done" ? "pending" : "done"
     });
-    save();
-    render();
+  };
+
+  // 🔥 Render UI
+  function render() {
+    let html = "";
+
+    tasks.forEach(t => {
+      let statusClass = t.status === "done" ? "done" : "pending";
+
+      html += `
+        <div class="task ${statusClass}">
+          <b>${t.title}</b><br>
+          ⏰ ${t.time}<br>
+          📌 ${t.status}<br><br>
+
+          <button onclick="toggleStatus('${t.id}', '${t.status}')">✔</button>
+          <button onclick="deleteTask('${t.id}')" style="background:red;color:white">Xóa</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("taskList").innerHTML = html;
   }
-
- function render() {
-  let html = "";
-
-  tasks.forEach(t => {
-    let statusClass = t.status === "done" ? "done" : "pending";
-
-    html += `
-      <div class="task ${statusClass}">
-        <b>${t.title}</b><br>
-        ⏰ ${t.time}<br>
-        📌 ${t.status === "done" ? "Đã hoàn thành" : "Chưa hoàn thành"}<br><br>
-
-        <button onclick="toggleStatus(${t.id})">✔</button>
-        <button onclick="deleteTask(${t.id})" style="background:red;color:white">Xóa</button>
-      </div>
-    `;
-  });
-
-  document.getElementById("taskList").innerHTML = html;
-}
-
-  render();
 </script>
